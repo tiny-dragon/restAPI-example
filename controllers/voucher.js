@@ -35,6 +35,16 @@ exports.getQrCode = function (req, res, next) {
     });
 };
 
+exports.verifyQrCode = function(req, res, next) {
+    voucherModel.verifyQrCode(req.params.qrKey, function(err, result) {
+        if (err) {
+            res.status(400).json({message: err, data: null});
+        } else {
+            res.status(200).json({message: null, data: result});
+        }
+    });
+}
+
 exports.getVoucherById = function(req, res, next) {
     if (req.body.tokenUserId == req.params.userId) {
         voucherModel.getVoucherById(req.body.tokenUserId, req.params.voucherId, function(err, result) {
@@ -56,6 +66,24 @@ exports.getVoucherById = function(req, res, next) {
 exports.getVoucherList = function(req, res, next) {
     if (req.body.tokenUserId == req.params.userId) {
         voucherModel.getVoucherList(req.body.tokenUserId, function(err, result) {
+            if (err)
+                res.status(400).json({message: err, data: null});
+            else
+                res.status(200).json({
+                    message : 'success',
+                    data    : {
+                        voucher_list : result
+                    }
+                });
+        });
+    }else {
+        res.status(400).json({message: 'Permission Denied', data: null});
+    }
+};
+
+exports.getVoucherListAll = function(req, res, next) {
+    if (req.body.tokenIsAdmin == 1) {
+        voucherModel.getVoucherListAll(function(err, result) {
             if (err)
                 res.status(400).json({message: err, data: null});
             else

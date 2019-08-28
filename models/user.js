@@ -26,6 +26,7 @@ exports.login = function (body, callback) {
 }
 
 exports.userinfo = function (user_id, callback) {
+    console.log(user_id);
     sql.query("SELECT * FROM user WHERE id = ? ", user_id, function (error, result) {             
         if(error) {
             callback(error, null);
@@ -86,6 +87,9 @@ exports.getMerchantList = function (callback) {
 exports.updateUser = function(userId, body, callback) {
     var email = body.email;
     var password = body.password;
+    var first_name = body.first_name;
+    var last_name = body.last_name;
+    var company_name = body.company_name;
     // var is_admin = body.is_admin;
     // var status = body.status;
 
@@ -103,20 +107,26 @@ exports.updateUser = function(userId, body, callback) {
                     query_params.push(email);
                 }
             
+                if (first_name != null) {
+                    query_str += ", first_name=?";
+                    query_params.push(first_name);
+                }
+            
+                if (last_name != null) {
+                    query_str += ", last_name=?";
+                    query_params.push(last_name);
+                }
+            
+                if (company_name != null) {
+                    query_str += ", company_name=?";
+                    query_params.push(company_name);
+                }
+            
                 if (password != null) {
                     query_str += ", password=?";
                     query_params.push(cryptr.encrypt(password));
                 }
             
-                // if (is_admin != null) {
-                //     query_str += ", is_admin=?";
-                //     query_params.push(is_admin);
-                // }
-            
-                // if (status != null) {
-                //     query_str += ", status=?";
-                //     query_params.push(status);
-                // }
                 query_str += " WHERE id=?";
                 query_params.push(userId);
             
@@ -128,6 +138,52 @@ exports.updateUser = function(userId, body, callback) {
                         callback(null, userId);
                     }
                 });    
+            } else {
+                callback("invalid userid", null);
+            }
+        }
+    }); 
+}
+
+exports.changePassword = function(userId, body, callback){
+    var old_password = body.old_password;
+    var new_password = body.new_password;
+
+    sql.query("SELECT * FROM user WHERE id = ? ", userId, function (error, result) {             
+        if(error) {
+            callback(error, null);
+        }
+        else{
+            if (result.length == 1) {
+                if (old_password == new_password) {
+                    callback("same password", null);
+                } else {
+                    let userinfo = result[0];
+
+                    if (cryptr.decrypt(userinfo.password) == old_password) {
+                        var query_str = "UPDATE user SET id=?";
+                        var query_params = [userId];
+                    
+                        if (new_password != null) {
+                            query_str += ", password=?";
+                            query_params.push(cryptr.encrypt(new_password));
+                        }
+    
+                        query_str += " WHERE id=?";
+                        query_params.push(userId);
+                    
+                        sql.query(query_str, query_params, function (error, result) {
+                            if(error) {
+                                callback(error, null);
+                            }
+                            else{
+                                callback(null, null);
+                            }
+                        });
+                    } else {
+                        callback("wrong old password", null);
+                    }
+                }
             } else {
                 callback("invalid userid", null);
             }

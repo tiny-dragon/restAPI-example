@@ -27,7 +27,7 @@ exports.addVoucherType = function(merchant_id, body, callback) {
 }
 
 exports.getVoucherTypeById = function (merchant_id, voucher_type_id, callback) {
-    sql.query("SELECT * FROM voucher_type WHERE merchant_id = ? AND id=?", [merchant_id, voucher_type_id], function(error, result) {             
+    sql.query("SELECT v.*, u.email, u.company_name FROM voucher_type v LEFT JOIN user u ON (v.merchant_id = u.id) WHERE v.merchant_id = ? AND v.id=?", [merchant_id, voucher_type_id], function(error, result) {             
         if(error) {
             callback(error, null);
         }
@@ -42,7 +42,18 @@ exports.getVoucherTypeById = function (merchant_id, voucher_type_id, callback) {
 }
 
 exports.getVoucherTypeList = function (merchant_id, callback) {
-    sql.query("SELECT * FROM voucher_type WHERE merchant_id = ?", merchant_id, function(error, result) {             
+    sql.query("SELECT v.*, u.email, u.company_name FROM voucher_type v LEFT JOIN user u ON (v.merchant_id = u.id) WHERE v.merchant_id = ?", merchant_id, function(error, result) {             
+        if(error) {
+            callback(error, null);
+        }
+        else{
+            callback(null, result);
+        }
+    });
+}
+
+exports.getVoucherTypeListAll = function (callback) {
+    sql.query("SELECT v.*, u.email, u.company_name FROM voucher_type v LEFT JOIN user u ON (v.merchant_id = u.id)", function(error, result) {             
         if(error) {
             callback(error, null);
         }

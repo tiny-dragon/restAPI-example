@@ -1,18 +1,16 @@
 const Nexmo = require('nexmo');
+var settings = require('../config/settings');
 
 const nexmo = new Nexmo({
   apiKey: 'e6f8f73f',
   apiSecret: 'qLbSakcrOQDZpvr0',
 });
 
-exports.sendSMS = function(customer_phone_number, qr_code, callback) {
+exports.sendSMS = function(customer_phone_number, unique_key, callback) {
     const from = 'Nexmo';
     const to = customer_phone_number;
-    const text = '<img src="' + qr_code + '"/>';
+    const text = settings.QRCODE_GENERATION_URL + unique_key;
     
-    callback(null, qr_code);
-
-    return;
     nexmo.message.sendSms(from, to, text, (err, responseData) => {
         if (err) {
             console.log(err);

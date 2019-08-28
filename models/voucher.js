@@ -35,30 +35,15 @@ exports.addVoucher = function(voucher_type_id, customer_email, customer_phone_nu
                         callback(error, null);
                     }
                     else{
-                        var qr_code_source = settings.QRCODE_VERIFY_URL + unique_key;
-
-                        QRCode.toDataURL(qr_code_source, function (err, qr_code) {
-                            if (err) 
-                                callback("qrcode generation failed", null);
-                            else {
-                                if (is_delivery == 1) {
-                                    // let data = qr_code.replace(/.*,/, '');
-                                    // let image = new Buffer(data, 'base64');
-                                    if (delivery_method == 0) { //sms
-                                        sms_helper.sendSMS(customer_phone_number, qr_code, callback);
-                                    } else if(delivery_method == 1) { //email
-                                        email_helper.sendEMail(customer_email, qr_code, callback);
-                                    } else {
-                                        callback("wrong delivery method", null);
-                                    }
-                                } else {
-                                    callback(null, null);
-                                }
-                                // callback(null, {
-                                //     qr_code : qr_code
-                                // });
+                        if (is_delivery == 1) {
+                            if (delivery_method == 0) { //sms
+                                sms_helper.sendSMS(customer_phone_number, unique_key, callback);
+                            } else if(delivery_method == 1) { //email
+                                email_helper.sendEMail(customer_email, unique_key, callback);
+                            } else {
+                                callback("wrong delivery method", null);
                             }
-                        });
+                        }
                     }
                 });   
             } else {
@@ -93,8 +78,40 @@ exports.getQrCode = function(unique_key, callback) {
     });
 }
 
+exports.verifyQrCode = function(unique_key, callback) {
+    sql.query("SELECT v.*, t.voucher_type_name, u.company_name FROM voucher v LEFT JOIN voucher_type t ON (v.voucher_type_id = t.id) LEFT JOIN user u ON (t.merchant_id = u.id) WHERE unique_key = ? ", unique_key, function (error, result) {             
+        if(error) {
+            callback(error, null);
+        }
+        else{
+            if (result.length == 1) {
+                let voucher_info = result[0];
+                let today = new Date();
+                console.log('today: ' + today);
+                let start_date = new Date(voucher_info['start_date']);
+                console.log('start_date: ' + start_date);
+                let expire_date = new Date(voucher_info['expire_date']);
+                console.log('expire_date: ' + expire_date);
+                if (today < start_date) {
+                    callback("before start", null);
+                } else if (today > expire_date) {
+                    callback("voucher is expired", null);
+                } else {
+                    callback(null, result[0]);
+                }
+            } else {
+                callback("invalid voucher type", null);
+            }
+        }
+    });
+}
+
 exports.getVoucherById = function (merchant_id, voucher_id, callback) {
-    var query_str = "SELECT v.*, t.voucher_type_name, t.expires_in FROM voucher v LEFT JOIN voucher_type t ON (v.voucher_type_id = t.id) WHERE t.merchant_id=? AND v.id=?";
+    var query_str = "SELECT v.*, t.voucher_type_name, t.expires_in, u.email, u.company_name " +
+                    "FROM voucher v " +
+                    "LEFT JOIN voucher_type t ON (v.voucher_type_id = t.id) " + 
+                    "LEFT JOIN user u ON (t.merchant_id = u.id) " + 
+                    "WHERE t.merchant_id=? AND v.id=?";
     sql.query(query_str, [merchant_id, voucher_id], function(error, result) {
         if(error) {
             callback(error, null);
@@ -110,8 +127,27 @@ exports.getVoucherById = function (merchant_id, voucher_id, callback) {
 }
 
 exports.getVoucherList = function (merchant_id, callback) {
-    var query_str = "SELECT v.*, t.voucher_type_name, t.expires_in FROM voucher v LEFT JOIN voucher_type t ON (v.voucher_type_id = t.id) WHERE t.merchant_id=?";
+    var query_str = "SELECT v.*, t.voucher_type_name, t.expires_in, u.email, u.company_name " +
+                    "FROM voucher v " + 
+                    "LEFT JOIN voucher_type t ON (v.voucher_type_id = t.id) " +
+                    "LEFT JOIN user u ON (t.merchant_id = u.id) " +
+                    "WHERE t.merchant_id=?";
     sql.query(query_str, merchant_id, function(error, result) {             
+        if(error) {
+            callback(error, null);
+        }
+        else{
+            callback(null, result);
+        }
+    });
+}
+
+exports.getVoucherListAll = function (callback) {
+    var query_str = "SELECT v.*, t.voucher_type_name, t.expires_in, u.email, u.company_name " +
+                    "FROM voucher v " + 
+                    "LEFT JOIN voucher_type t ON (v.voucher_type_id = t.id) " +
+                    "LEFT JOIN user u ON (t.merchant_id = u.id) ";
+    sql.query(query_str, function(error, result) {             
         if(error) {
             callback(error, null);
         }
@@ -147,6 +183,7 @@ exports.updateVoucher = function(merchant_id, voucher_id, body, callback) {
                             expire_date.setDate(expire_date.getDate() + voucher_type['expires_in']);
                             var price = body.price;
                             var quantity = body.quantity;
+                            var delivery_method = body.delivery_method;
                             var status = body.status;
 
                             var query_str = "UPDATE voucher SET id=?";
@@ -187,10 +224,11 @@ exports.updateVoucher = function(merchant_id, voucher_id, body, callback) {
                                 query_params.push(quantity);
                             }
                         
-                            if (status != null) {
-                                query_str += ", status=?";
-                                query_params.push(status);
+                            if (delivery_method != null) {
+                                query_str += ", delivery_method=?";
+                                query_params.push(delivery_method);
                             }
+
                             query_str += " WHERE id=?";
                             query_params.push(voucher_id);
                         
@@ -199,7 +237,15 @@ exports.updateVoucher = function(merchant_id, voucher_id, body, callback) {
                                     callback(error, null);
                                 }
                                 else{
-                                    callback(null, voucher_id);
+                                    if (is_delivery == 1) {
+                                        if (delivery_method == 0) { //sms
+                                            sms_helper.sendSMS(customer_phone_number, voucher['unique_key'], callback);
+                                        } else if(delivery_method == 1) { //email
+                                            email_helper.sendEMail(customer_email, voucher['unique_key'], callback);
+                                        } else {
+                                            callback("wrong delivery method", null);
+                                        }
+                                    }
                                 }
                             });    
                         } else {
@@ -248,12 +294,18 @@ exports.deliveryVoucher = function (merchant_id, voucher_id, callback) {
         else{
             if (result.length == 1) {
                 let voucher_info = result[0];
-                var qr_code = settings.QRCODE_GENERATION_URL + voucher_info['unique_key'];
+                var qr_code_source = settings.QRCODE_GENERATION_URL + voucher_info['unique_key'];
 
                 if (voucher_info['delivery_method'] == 0) { //sms
-                    sms_helper.sendEMail(voucher_info['customer_phone_number'], qr_code, callback);
+                    sms_helper.sendEMail(voucher_info['customer_phone_number'], qr_code_source, callback);
                 } else {    //email
-                    email_helper.sendEMail(voucher_info['customer_email'], qr_code, callback);
+                    QRCode.toDataURL(qr_code_source, function (err, qr_code) {
+                        if (err) 
+                            callback("qrcode generation failed", null);
+                        else {
+                            email_helper.sendEMail(voucher_info['customer_email'], qr_code, callback);
+                        }
+                    });
                 }
             } else {
                 callback("invalid voucher id", null);

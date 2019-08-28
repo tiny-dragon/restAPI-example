@@ -55,6 +55,24 @@ exports.getVoucherTypeList = function(req, res, next) {
     }
 };
 
+exports.getVoucherTypeListAll = function(req, res, next) {
+    if (req.body.tokenIsAdmin == 1) {
+        voucherTypeModel.getVoucherTypeListAll(function(err, result) {
+            if (err)
+                res.status(400).json({message: err, data: null});
+            else
+                res.status(200).json({
+                    message : 'success',
+                    data    : {
+                        voucher_type_list : result
+                    }
+                });
+        });
+    }else {
+        res.status(400).json({message: 'Permission Denied', data: null});
+    }
+};
+
 exports.updateVoucherType = function(req, res, next) {
     if (req.body.tokenUserId == req.params.userId) {
         voucherTypeModel.updateVoucherType(Number(req.params.userId), Number(req.params.voucherTypeId), req.body, function(err, result) {

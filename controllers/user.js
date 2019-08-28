@@ -43,12 +43,35 @@ exports.userinfo = function(req, res, next){
                     first_name  : result.first_name,
                     last_name   : result.last_name,
                     email       : result.email,
+                    company_name: result.company_name,
                     is_admin    : result.is_admin
                 }
             });
         }
     });
 };
+
+exports.getUserInfoById = function(req, res, next) {
+    if (req.body.tokenIsAdmin == 1) {
+        userModel.userinfo(req.params.userId, function(err, result) {
+            if (err)
+                res.status(400).json({message:err, data: null});
+            else {
+                res.status(200).json({
+                    message : 'success',
+                    data    : {
+                        id          : result.id,
+                        first_name  : result.first_name,
+                        last_name   : result.last_name,
+                        email       : result.email,
+                        company_name: result.company_name,
+                        is_admin    : result.is_admin
+                    }
+                });
+            }
+        });
+    }
+}
 
 exports.logout = function(req, res, next) {
     if (req.session) {
@@ -117,6 +140,26 @@ exports.updateUser = function(req, res, next) {
         res.status(400).json({message: 'Permission Denied', data: null});
     }
 };
+
+exports.changePassword = function(req, res, next) {
+    if (req.body.tokenUserId == req.params.userId) {
+        if (req.body.old_password && req.body.new_password) {
+            userModel.changePassword(Number(req.params.userId), req.body, function(err, result) {
+                if (err)
+                    res.status(400).json({message: err, data: err});
+                else
+                    res.status(200).json({
+                        message : 'success',
+                        data    : null
+                    });
+            });
+        } else {
+            res.status(400).json({message: 'Wrong Info', data: null});
+        }
+    }else {
+        res.status(400).json({message: 'Permission Denied', data: null});
+    }
+}
 
 exports.deleteUser = function(req, res, next) {
     if (req.body.tokenIsAdmin == 1) {
