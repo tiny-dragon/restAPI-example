@@ -45,6 +45,7 @@ exports.addUser = function(body, callback) {
     var password = body.password;
     var first_name = body.first_name;
     var last_name = body.last_name;
+    var company_name = body.company_name;
     // var is_admin = body.is_admin == null ? 0 : is_admin;
     // var status = body.status == null ? 0 : body.status;
     var is_admin = 0;
@@ -56,7 +57,7 @@ exports.addUser = function(body, callback) {
         }
         else{
             if (result.length == 0) {
-                sql.query("INSERT INTO user (email, first_name, last_name, password, is_admin, status) VALUES ?", [[[email, first_name, last_name, cryptr.encrypt(password), is_admin, status]]], function (error, result) {
+                sql.query("INSERT INTO user (email, first_name, last_name, company_name, password, is_admin, status) VALUES ?", [[[email, first_name, last_name, company_name, cryptr.encrypt(password), is_admin, status]]], function (error, result) {
                     if(error) {
                         callback(error, null);
                     }

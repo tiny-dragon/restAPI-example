@@ -2,7 +2,6 @@ var sql = require('../config/database');
 
 exports.addVoucherType = function(merchant_id, body, callback) {
     var voucher_type_name = body.voucher_type_name;
-    var price = body.price;
     var expires_in = body.expires_in;
     var status = body.status == null ? 0 : body.status;
 
@@ -12,7 +11,7 @@ exports.addVoucherType = function(merchant_id, body, callback) {
         }
         else{
             if (result.length == 0) {
-                sql.query("INSERT INTO voucher_type (merchant_id, voucher_type_name, price, expires_in, status) VALUES ?", [[[merchant_id, voucher_type_name, price, expires_in, status]]], function (error, result) {
+                sql.query("INSERT INTO voucher_type (merchant_id, voucher_type_name, expires_in, status) VALUES ?", [[[merchant_id, voucher_type_name, expires_in, status]]], function (error, result) {
                     if(error) {
                         callback(error, null);
                     }
@@ -55,7 +54,6 @@ exports.getVoucherTypeList = function (merchant_id, callback) {
 
 exports.updateVoucherType = function(merchant_id, voucher_type_id, body, callback) {
     var voucher_type_name = body.voucher_type_name;
-    var price = body.price;
     var expires_in = body.expires_in;
     var status = body.status;
 
@@ -71,11 +69,6 @@ exports.updateVoucherType = function(merchant_id, voucher_type_id, body, callbac
                 if (voucher_type_name != null) {
                     query_str += ", voucher_type_name=?";
                     query_params.push(voucher_type_name);
-                }
-            
-                if (price != null) {
-                    query_str += ", price=?";
-                    query_params.push(price);
                 }
             
                 if (expires_in != null) {

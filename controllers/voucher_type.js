@@ -1,7 +1,7 @@
 var voucherTypeModel = require('../models/voucher_type');
 
 exports.addVoucherType = function (req, res, next) {
-    if (req.body.voucher_type_name && req.body.price && req.body.expires_in) {
+    if (req.body.voucher_type_name && req.body.expires_in) {
         voucherTypeModel.addVoucherType(req.body.tokenUserId, req.body, function(err, result) {
             if (err)
                 res.status(400).json({message: err, data: null});

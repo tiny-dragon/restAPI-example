@@ -7,6 +7,9 @@ var userController = require('../controllers/user');
 var voucherController = require('../controllers/voucher');
 var voucherTypeController = require('../controllers/voucher_type');
 
+router.route('/qr/:qrKey')
+.get(voucherController.getQrCode);
+
 router.route('/login')
 .post(userController.login);
 
@@ -33,19 +36,16 @@ router.route('/users/:userId/voucherTypes/:voucherTypeId')
 .post(authService.verifyToken, voucherTypeController.updateVoucherType)
 .delete(authService.verifyToken, voucherTypeController.deleteVoucherType);
 
-router.route('/vouchers/')
-.post(voucherController.addVoucher);
-
-router.route('/vouchers/:voucherId')
-.post(authService.verifyToken, voucherController.updateVoucher);
-
 router.route('/users/:userId/vouchers')
+.post(authService.verifyToken, voucherController.addVoucher)
 .get(authService.verifyToken, voucherController.getVoucherList);
 
 router.route('/users/:userId/vouchers/:voucherId')
+.get(authService.verifyToken, voucherController.getVoucherById)
+.post(authService.verifyToken, voucherController.updateVoucher)
 .delete(authService.verifyToken, voucherController.deleteVoucher);
 
-router.route('/test')
-.get(voucherController.testQRCODE);
+router.route('/users/:userId/vouchers/:voucherId/delivery')
+.post(authService.verifyToken, voucherController.deliveryVoucher);
 
 module.exports = router;
