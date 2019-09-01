@@ -2,8 +2,8 @@ const Nexmo = require('nexmo');
 var settings = require('../config/settings');
 
 const nexmo = new Nexmo({
-  apiKey: 'e6f8f73f',
-  apiSecret: 'qLbSakcrOQDZpvr0',
+  apiKey: 'Your Api Key',
+  apiSecret: 'Your Api Secret',
 });
 
 exports.sendSMS = function(customer_phone_number, unique_key, callback) {
