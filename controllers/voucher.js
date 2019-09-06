@@ -1,7 +1,7 @@
 var voucherModel = require('../models/voucher');
 
 exports.addVoucher = function (req, res, next) {
-    if (req.body.tokenUserId == req.params.userId) {
+    if (req.body.tokenIsAdmin == 1 || req.body.tokenUserId == req.params.userId) {
         if (req.body.voucher_type_id && (req.body.customer_email || req.body.customer_phone_number)) {
             voucherModel.addVoucher(req.body.voucher_type_id, req.body.customer_email, req.body.customer_phone_number, req.body.price, req.body.quantity, req.body.start_date, req.body.delivery_method, req.body.is_delivery, function(err, result) {
                 if (err)
@@ -46,8 +46,8 @@ exports.verifyQrCode = function(req, res, next) {
 }
 
 exports.getVoucherById = function(req, res, next) {
-    if (req.body.tokenUserId == req.params.userId) {
-        voucherModel.getVoucherById(req.body.tokenUserId, req.params.voucherId, function(err, result) {
+    if (req.body.tokenIsAdmin == 1 || req.body.tokenUserId == req.params.userId) {
+        voucherModel.getVoucherById(req.params.userId, req.params.voucherId, function(err, result) {
             if (err)
                 res.status(400).json({message: err, data: null});
             else
@@ -100,8 +100,8 @@ exports.getVoucherListAll = function(req, res, next) {
 };
 
 exports.updateVoucher = function(req, res, next) {
-    if (req.body.tokenUserId == req.params.userId) {
-        voucherModel.updateVoucher(Number(req.params.userId), Number(req.params.voucherId), req.body, function(err, result) {
+    if (req.body.tokenIsAdmin == 1 || req.body.tokenUserId == req.params.userId) {
+        voucherModel.updateVoucher(req.params.userId, Number(req.params.voucherId), req.body, function(err, result) {
             if (err)
                 res.status(400).json({message: err, data: null});
             else
@@ -118,8 +118,8 @@ exports.updateVoucher = function(req, res, next) {
 };
 
 exports.deleteVoucher = function(req, res, next) {
-    if (req.body.tokenUserId == req.params.userId) {
-        voucherModel.deleteVoucher(Number(req.params.userId), Number(req.params.voucherId), function(err, result) {
+    if (req.body.tokenIsAdmin == 1 || req.body.tokenUserId == req.params.userId) {
+        voucherModel.deleteVoucher(req.params.userId, req.params.voucherId, function(err, result) {
             if (err)
                 res.status(400).json({message: err, data: null});
             else
@@ -131,7 +131,7 @@ exports.deleteVoucher = function(req, res, next) {
 }
 
 exports.deliveryVoucher = function(req, res, next) {
-    if (req.body.tokenUserId == req.params.userId) {
+    if (req.body.tokenIsAdmin == 1 || req.body.tokenUserId == req.params.userId) {
         voucherModel.deliveryVoucher(Number(req.params.userId), Number(req.params.voucherId), function(err, result) {
             if (err)
                 res.status(400).json({message: err, data: null});

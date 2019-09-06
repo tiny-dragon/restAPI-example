@@ -2,12 +2,12 @@ const Nexmo = require('nexmo');
 var settings = require('../config/settings');
 
 const nexmo = new Nexmo({
-  apiKey: 'Your Api Key',
-  apiSecret: 'Your Api Secret',
+  apiKey: settings.NEXMO_API_KEY,
+  apiSecret: settings.NEXMO_API_SECRET,
 });
 
 exports.sendSMS = function(customer_phone_number, unique_key, callback) {
-    const from = 'Nexmo';
+    const from = 'Koalabeds';
     const to = customer_phone_number;
     const text = settings.QRCODE_GENERATION_URL + unique_key;
     

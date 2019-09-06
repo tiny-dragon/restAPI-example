@@ -14,8 +14,7 @@ exports.addVoucherType = function(merchant_id, body, callback) {
                 sql.query("INSERT INTO voucher_type (merchant_id, voucher_type_name, expires_in, status) VALUES ?", [[[merchant_id, voucher_type_name, expires_in, status]]], function (error, result) {
                     if(error) {
                         callback(error, null);
-                    }
-                    else{
+                    } else {
                         callback(null, result.insertId);
                     }
                 });    
@@ -27,11 +26,21 @@ exports.addVoucherType = function(merchant_id, body, callback) {
 }
 
 exports.getVoucherTypeById = function (merchant_id, voucher_type_id, callback) {
-    sql.query("SELECT v.*, u.email, u.company_name FROM voucher_type v LEFT JOIN user u ON (v.merchant_id = u.id) WHERE v.merchant_id = ? AND v.id=?", [merchant_id, voucher_type_id], function(error, result) {             
+    let sql_str = "SELECT v.*, u.email, u.company_name, u.first_name, u.last_name FROM voucher_type v LEFT JOIN user u ON (v.merchant_id = u.id)";
+    let params = null;
+    
+    if (merchant_id == 'all') {
+        sql_str += " WHERE v.id=?";
+        params = voucher_type_id;
+    } else {
+        sql_str += " WHERE v.merchant_id = ? AND v.id=?";
+        params = [merchant_id, voucher_type_id];
+    }
+
+    sql.query(sql_str, params, function(error, result) {             
         if(error) {
             callback(error, null);
-        }
-        else{
+        } else {
             if (result.length == 1) {
                 callback(null, result[0]);
             } else {
@@ -42,7 +51,7 @@ exports.getVoucherTypeById = function (merchant_id, voucher_type_id, callback) {
 }
 
 exports.getVoucherTypeList = function (merchant_id, callback) {
-    sql.query("SELECT v.*, u.email, u.company_name FROM voucher_type v LEFT JOIN user u ON (v.merchant_id = u.id) WHERE v.merchant_id = ?", merchant_id, function(error, result) {             
+    sql.query("SELECT v.*, u.email, u.company_name, u.first_name, u.last_name FROM voucher_type v LEFT JOIN user u ON (v.merchant_id = u.id) WHERE v.merchant_id = ? ORDER BY v.id DESC", merchant_id, function(error, result) {             
         if(error) {
             callback(error, null);
         }
@@ -53,7 +62,7 @@ exports.getVoucherTypeList = function (merchant_id, callback) {
 }
 
 exports.getVoucherTypeListAll = function (callback) {
-    sql.query("SELECT v.*, u.email, u.company_name FROM voucher_type v LEFT JOIN user u ON (v.merchant_id = u.id)", function(error, result) {             
+    sql.query("SELECT v.*, u.email, u.company_name, u.first_name, u.last_name FROM voucher_type v LEFT JOIN user u ON (v.merchant_id = u.id) ORDER BY v.id DESC", function(error, result) {             
         if(error) {
             callback(error, null);
         }
